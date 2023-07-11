@@ -51,8 +51,10 @@ def read_frames(vst, vssc):
     return read_frame(vst), read_frame(vssc)
 
 # Output the average of one of the cameras every some amount of time.
-def average_frames(vssc):
-    pass
+def average_frames(frames):
+    av = np.average(frames, axis=0)
+    av = (np.rint(av)).astype(np.uint8)
+    return av
 
 # Display both cameras side by side when function run.
 def display_images(temp_frame, sc_frame):
@@ -110,27 +112,43 @@ vst, vssc = stream_init_all(srct, srcsc)
 done = False
 t = ts = time.time()    # t is tracking time, ts is every time image saved.
 tdiff = 0
+frames = []
+frames_maxlen = 5
+
+frames_add = True
 
 # Check time, read both frames, display them.
 while not done:
     # Measure time elapsed
     t = time.time()
-    print("Time is:", format_time(t))
 
     # Read and display frames
     temp_frame, sc_frame = read_frames(vst, vssc)
 
+    #TODO Maybe a smarter way to do this
+    if len(frames) >= frames_maxlen:
+        frames = frames[1:]
+    
+    frames.append(sc_frame)
+
+
+
+
     display_images(temp_frame, sc_frame)
 
     # Don't need to save all frames, can do every few:
-    print(t - ts)
     if t - ts >= save_rate:
-        print("Saving image")
-        save_images(test_name, temp_frame, sc_frame)
+        print("Saving image at:", format_time(t))
+
+        av_frame = average_frames(frames)
+        display_images(temp_frame, av_frame)
+
+        save_images(test_name, temp_frame, av_frame)
         ts = t
 
     done = check_quit()
 
 # Close everything
+
 
 close_all(vst, vssc)
