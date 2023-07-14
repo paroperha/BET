@@ -29,8 +29,24 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import sys
 
 from imutils.video import VideoStream   # Faster image grabbing threading.
+
+
+
+
+
+#############################################
+
+srct = 1
+srcsc = 2
+folder_name = "images/"
+file_ext = ".jpg"
+test_name = "E1"
+save_rate = 1     # seconds before next save
+frames_maxlen = 5
+
 
 # Read from the cameras using VideoStream. 
 def stream_init(source):
@@ -80,8 +96,7 @@ def save_image(name, frame):
         raise Exception("Could not write image: ", name)
 
 # Check for quit
-def check_quit():
-    key = cv2.waitKey(1) & 0xFF
+def check_quit(key):
 
     # if the `q` key was pressed, break from the loop
     return key == ord("q")
@@ -97,58 +112,65 @@ def close_all(vst, vssc):
 
 
 
-#############################################
+if __name__ == "__main__":
+    vst, vssc = stream_init_all(srct, srcsc)
 
-srct = 0
-srcsc = 1
-folder_name = "images/"
-file_ext = ".jpg"
-test_name = "E1"
-save_rate = 1     # seconds before next save
-
-
-vst, vssc = stream_init_all(srct, srcsc)
-
-done = False
-t = ts = time.time()    # t is tracking time, ts is every time image saved.
-tdiff = 0
-frames = []
-frames_maxlen = 5
-
-frames_add = True
-
-# Check time, read both frames, display them.
-while not done:
-    # Measure time elapsed
-    t = time.time()
-
-    # Read and display frames
-    temp_frame, sc_frame = read_frames(vst, vssc)
-
-    #TODO Maybe a smarter way to do this
-    if len(frames) >= frames_maxlen:
-        frames = frames[1:]
-    
-    frames.append(sc_frame)
+    if sys.argc > 1:
+        srct = int(sys.argv[1])
+        srcsc = int(sys.argv[2])
+    if sys.argc == 4:
+        frames_maxlen = int(sys.argv[3])  # How long to average for
 
 
+    done = False
+    t = ts = time.time()    # t is tracking time, ts is every time image saved.
+    tdiff = 0
+    frames = []
 
 
-    display_images(temp_frame, sc_frame)
+    frames_add = True
+    cont_saving = False
 
-    # Don't need to save all frames, can do every few:
-    if t - ts >= save_rate:
-        print("Saving image at:", format_time(t))
+    # Check time, read both frames, display them.
+    while not done:
+        # Measure time elapsed
+        t = time.time()
 
-        av_frame = average_frames(frames)
-        display_images(temp_frame, av_frame)
+        # Read and display frames
+        temp_frame, sc_frame = read_frames(vst, vssc)
 
-        save_images(test_name, temp_frame, av_frame)
-        ts = t
+        key = cv2.waitKey(1) & 0xFF
 
-    done = check_quit()
+        #TODO Maybe a smarter way to do this
+        if len(frames) >= frames_maxlen:
+            frames = frames[1:]
+        
+        frames.append(sc_frame)
 
-# Close everything
+        # Start and stop continuous saving
+        if key == ord("c"):
+            if not cont_saving:
+                print("Continous saving every", save_rate, "seconds.")
+                cont_saving = True
+            elif cont_saving:
+                print("Stop continuous saving")
+                cont_saving = False
+
+        display_images(temp_frame, sc_frame)
+
+        # Don't need to save all frames, can do every few:
+        if key == ord("s") or (cont_saving and t-ts >= save_rate):
+            print("Saving image at:", format_time(t))
+
+            av_frame = average_frames(frames)
+            display_images(temp_frame, av_frame)
+
+            save_images(test_name, temp_frame, av_frame)
+            ts = t
+
+        done = check_quit(key)
+
+    # Close everything
 
 
-close_all(vst, vssc)
+    close_all(vst, vssc)
