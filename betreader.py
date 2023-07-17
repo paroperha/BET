@@ -113,14 +113,18 @@ def close_all(vst, vssc):
 
 
 if __name__ == "__main__":
-    vst, vssc = stream_init_all(srct, srcsc)
 
-    if sys.argc > 1:
+    if len(sys.argv) > 1:
+        print("Updating camera sources")
         srct = int(sys.argv[1])
         srcsc = int(sys.argv[2])
-    if sys.argc == 4:
+    if len(sys.argv) >= 4:
         frames_maxlen = int(sys.argv[3])  # How long to average for
+        save_rate = int(sys.argv[4])
+    if len(sys.argv) >= 6:
+        test_name = str(sys.argv[5])
 
+    vst, vssc = stream_init_all(srct, srcsc)
 
     done = False
     t = ts = time.time()    # t is tracking time, ts is every time image saved.
@@ -145,7 +149,8 @@ if __name__ == "__main__":
         if len(frames) >= frames_maxlen:
             frames = frames[1:]
         
-        frames.append(sc_frame)
+        if t - ts >= 1/30:
+            frames.append(sc_frame)
 
         # Start and stop continuous saving
         if key == ord("c"):
@@ -163,7 +168,7 @@ if __name__ == "__main__":
             print("Saving image at:", format_time(t))
 
             av_frame = average_frames(frames)
-            display_images(temp_frame, av_frame)
+            # display_images(temp_frame, av_frame)
 
             save_images(test_name, temp_frame, av_frame)
             ts = t
