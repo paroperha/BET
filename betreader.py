@@ -127,7 +127,7 @@ if __name__ == "__main__":
     vst, vssc = stream_init_all(srct, srcsc)
 
     done = False
-    t = ts = time.time()    # t is tracking time, ts is every time image saved.
+    t = ts = ta = time.time()    # t is tracking time, ts is every time image saved.
     tdiff = 0
     frames = []
 
@@ -149,8 +149,9 @@ if __name__ == "__main__":
         if len(frames) >= frames_maxlen:
             frames = frames[1:]
         
-        if t - ts >= 1/30:
+        if t - ta >= 1/30:
             frames.append(sc_frame)
+            ta = t
 
         # Start and stop continuous saving
         if key == ord("c"):
