@@ -50,7 +50,7 @@ frames_maxlen = 5
 
 # Read from the cameras using VideoStream. 
 def stream_init(source):
-    return VideoStream(src=source).start()
+    return cv2.VideoCapture(index=source)
 
 # Init two cameras
 def stream_init_all(srct, srcsc):
@@ -61,7 +61,8 @@ def stream_init_all(srct, srcsc):
 # Read from a camera
 # TODO Check if the frame is good
 def read_frame(vs):
-    return vs.read()
+    ret, frame = vs.read()
+    return frame
 
 def read_frames(vst, vssc):
     return read_frame(vst), read_frame(vssc)
@@ -123,8 +124,11 @@ if __name__ == "__main__":
         save_rate = int(sys.argv[4])
     if len(sys.argv) >= 6:
         test_name = str(sys.argv[5])
+        exp = float(sys.argv[6])
 
     vst, vssc = stream_init_all(srct, srcsc)
+    
+    vssc.set(cv2.CAP_PROP_AUTO_EXPOSURE, exp)
 
     done = False
     t = ts = ta = time.time()    # t is tracking time, ts is every time image saved.
