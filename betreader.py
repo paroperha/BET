@@ -108,8 +108,8 @@ def close_all(vst, vssc):
     cv2.destroyAllWindows()
 
     # TODO Check for all capture and vs
-    vst.stop()
-    vssc.stop()
+    vst.release()
+    vssc.release()
 
 
 
